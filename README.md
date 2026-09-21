@@ -78,11 +78,6 @@ src/
 - 不保证与未来固件兼容
 - 本软件大量采用AI制作，请谨慎学习参考
 
-## 贡献者
-
-- [FallenLeeee](https://github.com/FallenLeeee) — 项目作者 / maintainer  
-- 欢迎提交 Issue 与 Pull Request
-
 ## 许可证
 
 本项目采用 [MIT License](LICENSE) 开源。
