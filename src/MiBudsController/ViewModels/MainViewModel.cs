@@ -20,6 +20,9 @@ public partial class MainViewModel : ObservableObject
     /// <summary>连接广播后延迟扫描的间隔，避免系统尚未建连完成就扫到空列表。</summary>
     private const int BroadcastRescanDelayMs = 5000;
 
+    /// <summary>打开界面时电量回读的等待上限；超时按连接监测策略清空显示。</summary>
+    private const int BatteryRefreshTimeoutMs = 3000;
+
     private readonly EarbudsClient _client;
     private readonly BluetoothService _bluetooth = new();
     private readonly AppSettings _settings;
@@ -267,8 +270,8 @@ public partial class MainViewModel : ObservableObject
                 StatusText = "已连接";
             }
 
-            // 主动回读，避免界面上残留旧的充电/电量读数。
-            _client.GetDeviceInfo();
+            // 电量读取与连接状态监测同一入口：打开界面时强制回读。
+            await RefreshBatteryReadingsAsync();
             _client.GetRunInfo();
         }
         catch (Exception ex)
@@ -278,6 +281,50 @@ public partial class MainViewModel : ObservableObject
         finally
         {
             _verifying = false;
+        }
+    }
+
+    /// <summary>
+    /// 电量读取策略与连接状态监测一致：
+    /// 打开界面时请求回读设备信息；在超时内收到快照则更新；
+    /// 未连接或回读失败/超时则清空电量，避免残留「充电中」。
+    /// </summary>
+    private async Task RefreshBatteryReadingsAsync()
+    {
+        if (!_client.IsConnected)
+        {
+            if (HasAnyBatteryReading)
+            {
+                ClearBatteryReadings();
+                _logs.AddSystem("[电量] 未连接，已清空电量显示");
+            }
+
+            return;
+        }
+
+        var tcs = new TaskCompletionSource<DeviceSnapshot>(TaskCreationOptions.RunContinuationsAsynchronously);
+        void OnSnapshot(DeviceSnapshot snapshot) => tcs.TrySetResult(snapshot);
+
+        _client.SnapshotUpdated += OnSnapshot;
+        try
+        {
+            _client.GetDeviceInfo();
+            Task completed = await Task.WhenAny(tcs.Task, Task.Delay(BatteryRefreshTimeoutMs));
+            if (completed == tcs.Task)
+            {
+                DeviceSnapshot snapshot = await tcs.Task;
+                _dispatcher.TryEnqueue(() => ApplySnapshot(snapshot));
+                _logs.AddSystem("[电量] 打开界面已回读电量");
+            }
+            else
+            {
+                _dispatcher.TryEnqueue(ClearBatteryReadings);
+                _logs.AddSystem("[电量] 打开界面回读超时，已清空电量（与连接状态监测一致）");
+            }
+        }
+        finally
+        {
+            _client.SnapshotUpdated -= OnSnapshot;
         }
     }
 
