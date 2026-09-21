@@ -38,9 +38,18 @@ public sealed partial class MainWindow : Window
         ApplyWindowBounds();
         ApplyBackdrop();
         // 未打包场景下 SystemBackdrop 有时在 Show 后才生效，激活时再补一次 DWM。
-        Activated += (_, _) =>
+        // 主界面前台时轮询电量；失焦时停轮询。
+        Activated += (_, args) =>
         {
             TryApplyMicaDwm();
+            if (args.WindowActivationState == WindowActivationState.Deactivated)
+            {
+                Main.StopBatteryPolling();
+            }
+            else
+            {
+                Main.StartBatteryPolling();
+            }
         };
         NavView.SelectedItem = DeviceItem;
         RootFrame.Navigate(typeof(Views.HomePage));
@@ -108,15 +117,17 @@ public sealed partial class MainWindow : Window
         if (AppState.SettingsVm.MinimizeToTray && AppState.Tray is not null)
         {
             args.Cancel = true;
+            Main.StopBatteryPolling();
             AppWindow.Hide();
         }
     }
 
-    /// <summary>显示窗口并激活到前台；打开时校验耳机是否仍连接。</summary>
+    /// <summary>显示窗口并激活到前台；打开时校验连接并启动电量轮询。</summary>
     public void ShowAndActivate()
     {
         AppWindow.Show();
         Activate();
+        Main.StartBatteryPolling();
         _ = Main.VerifyConnectionAsync();
     }
 

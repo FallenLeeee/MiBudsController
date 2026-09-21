@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MiBudsController.Core.Models;
 using MiBudsController.Core.Services;
@@ -23,6 +24,9 @@ public partial class MainViewModel : ObservableObject
     /// <summary>打开界面时电量回读的等待上限；超时按连接监测策略清空显示。</summary>
     private const int BatteryRefreshTimeoutMs = 3000;
 
+    /// <summary>主界面前台时的电量/充电状态轮询间隔。</summary>
+    private const int BatteryPollIntervalMs = 1000;
+
     private readonly EarbudsClient _client;
     private readonly BluetoothService _bluetooth = new();
     private readonly AppSettings _settings;
@@ -35,6 +39,7 @@ public partial class MainViewModel : ObservableObject
     private bool _verifying;
     private string? _attachedDeviceId;
     private CancellationTokenSource? _broadcastRescanCts;
+    private DispatcherQueueTimer? _batteryPollTimer;
 
     /// <summary>
     /// 构造时绑定客户端与蓝牙服务事件，并把所有回调切回 UI 线程；
@@ -282,6 +287,51 @@ public partial class MainViewModel : ObservableObject
         {
             _verifying = false;
         }
+    }
+
+    /// <summary>
+    /// 主界面在前台时启动电量/充电状态轮询（默认每 1 秒回读一次设备信息）。
+    /// 失焦或隐藏后应调用 StopBatteryPolling。
+    /// </summary>
+    public void StartBatteryPolling()
+    {
+        if (_batteryPollTimer is null)
+        {
+            _batteryPollTimer = _dispatcher.CreateTimer();
+            _batteryPollTimer.Interval = TimeSpan.FromMilliseconds(BatteryPollIntervalMs);
+            _batteryPollTimer.Tick += OnBatteryPollTick;
+        }
+
+        if (_batteryPollTimer.IsRunning)
+        {
+            return;
+        }
+
+        _batteryPollTimer.Start();
+        _logs.AddSystem($"[电量] 主界面前台：每 {BatteryPollIntervalMs}ms 轮询电量/充电状态");
+    }
+
+    /// <summary>停止主界面前台电量轮询（失焦、隐藏到托盘时调用）。</summary>
+    public void StopBatteryPolling()
+    {
+        if (_batteryPollTimer?.IsRunning != true)
+        {
+            return;
+        }
+
+        _batteryPollTimer.Stop();
+        _logs.AddSystem("[电量] 主界面非前台：已停止电量轮询");
+    }
+
+    /// <summary>轮询 Tick：已连接时回读设备信息（含左/右/盒电量与充电标志）。</summary>
+    private void OnBatteryPollTick(object? sender, object e)
+    {
+        if (!_client.IsConnected)
+        {
+            return;
+        }
+
+        _client.GetDeviceInfo();
     }
 
     /// <summary>
