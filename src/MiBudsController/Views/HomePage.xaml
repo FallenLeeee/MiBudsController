@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="MiBudsController.Views.HomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MiBudsController.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="Transparent"
+    mc:Ignorable="d">
+    <ScrollViewer Background="Transparent" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
+        <StackPanel
+            Padding="20,16,20,28"
+            MaxWidth="760"
+            HorizontalAlignment="Left"
+            Spacing="16">
+
+            <StackPanel Spacing="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock
+                            Text="设备"
+                            Style="{StaticResource TitleTextBlockStyle}" />
+                        <TextBlock
+                            Text="{x:Bind Vm.ConnectedDeviceTitle, Mode=OneWay}"
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel
+                        Grid.Column="1"
+                        Margin="16,4,0,0"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                        <Button
+                            Content="重新扫描"
+                            Command="{x:Bind Vm.ScanDevicesCommand}"
+                            IsEnabled="{x:Bind Vm.CanRefresh, Mode=OneWay}" />
+                        <Button
+                            Content="断开连接"
+                            Command="{x:Bind Vm.DisconnectCommand}"
+                            IsEnabled="{x:Bind Vm.IsConnected, Mode=OneWay}"
+                            Visibility="{x:Bind Vm.ShowDeviceStatus, Mode=OneWay}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+
+            <InfoBar
+                IsClosable="True"
+                IsOpen="{x:Bind Vm.IsInfoOpen, Mode=OneWay}"
+                Severity="{x:Bind Vm.InfoSeverity, Mode=OneWay}"
+                Message="{x:Bind Vm.InfoMessage, Mode=OneWay}" />
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <StackPanel Spacing="14">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="扫描已连接设备" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock
+                            Text="启动时自动扫描；也可手动刷新。仅显示 Windows 当前已连接的 Redmi / Xiaomi 耳机，发现后自动接入，无需手动“连接”。系统蓝牙连接广播会写入日志。"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ComboBox
+                        Header="已连接耳机"
+                        HorizontalAlignment="Stretch"
+                        MinHeight="36"
+                        ItemsSource="{x:Bind Vm.Devices}"
+                        DisplayMemberPath="Name"
+                        PlaceholderText="暂无已连接的耳机"
+                        SelectedItem="{x:Bind Vm.SelectedDevice, Mode=TwoWay}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            Content="重新扫描"
+                            Command="{x:Bind Vm.ScanDevicesCommand}"
+                            IsEnabled="{x:Bind Vm.CanRefresh, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </StackPanel>
+                    <TextBlock
+                        Text="{x:Bind Vm.ScanHint, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- Battery -->
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border
+                        Grid.Column="0"
+                        Padding="12,8"
+                        CornerRadius="6"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                        <StackPanel Spacing="6" HorizontalAlignment="Center">
+                            <TextBlock Text="{x:Bind Vm.LeftBattery.Title}" HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="LeftBatteryLevelText" Text="{x:Bind Vm.LeftBattery.LevelText, Mode=OneWay}" HorizontalAlignment="Center" FontSize="28" FontWeight="SemiBold" />
+                            <ProgressBar
+                                x:Name="LeftBatteryBar"
+                                Width="88"
+                                Height="4"
+                                Minimum="0"
+                                Maximum="100"
+                                Foreground="{x:Bind Vm.LeftBattery.LevelBrush, Mode=OneWay}"
+                                Value="{x:Bind Vm.LeftBattery.PercentValue, Mode=OneWay}" />
+                            <TextBlock Text="{x:Bind Vm.LeftBattery.StateText, Mode=OneWay}" HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Grid.Column="1"
+                        Padding="12,8"
+                        CornerRadius="6"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                        <StackPanel Spacing="6" HorizontalAlignment="Center">
+                            <TextBlock Text="{x:Bind Vm.RightBattery.Title}" HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="RightBatteryLevelText" Text="{x:Bind Vm.RightBattery.LevelText, Mode=OneWay}" HorizontalAlignment="Center" FontSize="28" FontWeight="SemiBold" />
+                            <ProgressBar
+                                x:Name="RightBatteryBar"
+                                Width="88"
+                                Height="4"
+                                Minimum="0"
+                                Maximum="100"
+                                Foreground="{x:Bind Vm.RightBattery.LevelBrush, Mode=OneWay}"
+                                Value="{x:Bind Vm.RightBattery.PercentValue, Mode=OneWay}" />
+                            <TextBlock Text="{x:Bind Vm.RightBattery.StateText, Mode=OneWay}" HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Grid.Column="2"
+                        Padding="12,8"
+                        CornerRadius="6"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                        <StackPanel Spacing="6" HorizontalAlignment="Center">
+                            <TextBlock Text="{x:Bind Vm.CaseBattery.Title}" HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="CaseBatteryLevelText" Text="{x:Bind Vm.CaseBattery.LevelText, Mode=OneWay}" HorizontalAlignment="Center" FontSize="28" FontWeight="SemiBold" />
+                            <ProgressBar
+                                x:Name="CaseBatteryBar"
+                                Width="88"
+                                Height="4"
+                                Minimum="0"
+                                Maximum="100"
+                                Foreground="{x:Bind Vm.CaseBattery.LevelBrush, Mode=OneWay}"
+                                Value="{x:Bind Vm.CaseBattery.PercentValue, Mode=OneWay}" />
+                            <TextBlock Text="{x:Bind Vm.CaseBattery.StateText, Mode=OneWay}" HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- 降噪状态 -->
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="降噪状态" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock
+                            Text="通透 / 降噪 / 关闭 为同级三选一，分支控件在本卡片内"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+
+                    <controls:SegmentedControl
+                        MinHeight="40"
+                        ItemsSource="{x:Bind Noise.NoiseModes}"
+                        SelectedOption="{x:Bind Noise.SelectedNoiseMode, Mode=TwoWay}" />
+
+                    <StackPanel
+                        x:Name="AncBranchPanel"
+                        Spacing="14"
+                        Visibility="{x:Bind Noise.ShowAncBranch, Mode=OneWay}">
+                        <TextBlock
+                            Text="降噪"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+
+                        <Border
+                            Padding="14,12"
+                            CornerRadius="6"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2">
+                                    <TextBlock Text="智能降噪" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock
+                                        Text="开启后强度由耳机自动调节，与手动滑块互斥"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ToggleSwitch
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    IsEnabled="{x:Bind Noise.IsSmartNoiseEnabled, Mode=OneWay}"
+                                    IsOn="{x:Bind Noise.SmartNoiseCancelling, Mode=TwoWay}" />
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            Padding="14,12"
+                            CornerRadius="6"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                            <StackPanel Spacing="8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="降噪强度" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Text="{x:Bind Noise.AncLevelText, Mode=OneWay}"
+                                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                </Grid>
+                                <Slider
+                                    MinHeight="32"
+                                    IsEnabled="{x:Bind Noise.IsAncLevelEnabled, Mode=OneWay}"
+                                    Minimum="0"
+                                    Maximum="19"
+                                    StepFrequency="1"
+                                    TickFrequency="1"
+                                    Value="{x:Bind Noise.AncLevel, Mode=TwoWay}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="轻度" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock Grid.Column="1" Text="深度" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </Grid>
+                                <TextBlock
+                                    Text="{x:Bind Noise.AncLevelHint, Mode=OneWay}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel
+                        x:Name="TransparencyBranchPanel"
+                        Spacing="12"
+                        Visibility="{x:Bind Noise.ShowTransparencyBranch, Mode=OneWay}">
+                        <TextBlock
+                            Text="通透"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <Border
+                            Padding="14,12"
+                            CornerRadius="6"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="通透模式" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <controls:SegmentedControl
+                                    MinHeight="40"
+                                    ItemsSource="{x:Bind Noise.TransparencyPresets}"
+                                    SelectedOption="{x:Bind Noise.SelectedTransparencyPreset, Mode=TwoWay}" />
+                                <TextBlock
+                                    Text="标准 → 环境增强 → 人声增强"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <TextBlock
+                        x:Name="OffHintText"
+                        Text="环境声已关闭 · 无额外调节"
+                        Style="{StaticResource BodyTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Visibility="{x:Bind Noise.ShowOffHint, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="设备信息" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock Text="{x:Bind Vm.FirmwareText, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" />
+                    <TextBlock Text="{x:Bind Vm.VidPidText, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" />
+                    <TextBlock
+                        Text="低延迟请在「音效设置」中调节"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

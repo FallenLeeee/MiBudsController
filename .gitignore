@@ -1,0 +1,97 @@
+## Build outputs
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rtifacts/
+publish/
+*.pubxml
+PublishScripts/
+AppPackages/
+BundleArtifacts/
+*.msix
+*.msixupload
+*.appx
+*.appxbundle
+*.appxupload
+
+## Visual Studio / IDE
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+.idea/
+.vscode/*
+!.vscode/extensions.json
+_ReSharper*/
+*.DotSettings.user
+*.dotCover
+Generated\ Files/
+*_wpftmp.csproj
+
+## NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+packages/
+
+## Test / coverage
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+BenchmarkDotNet.Artifacts/
+
+## Logs & local runtime data
+[Ll]og/
+[Ll]ogs/
+*.log
+*.binlog
+# 本机运行时配置（含 LastDeviceId 等，勿提交）
+settings.json
+**/MiBudsController/logs/
+protocol-*.log
+
+## Secrets / keys
+*.pfx
+*.p12
+*.snk
+*.pem
+*.key
+*.env
+.env.*
+secrets.json
+credentials.json
+appsettings.*.local.json
+
+## Local capture / design screenshots
+tools/capture-*.ps1
+tools/*.png
+tools/*.jpg
+
+## OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## Publish artifacts
+artifacts/
+
+## 开源仓库不同步的内容
+scripts/
+# 单元测试（本地可保留，不入库）
+tests/
+# 设计稿 / UI 示意
+design/
+DESIGN.md
+# 诊断工具与本地截图脚本
+tools/
+# Agent / 内部开发规范，不入库
+**/.github/

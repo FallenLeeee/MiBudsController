@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="MiBudsController.Views.SpatialPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MiBudsController.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="Transparent"
+    mc:Ignorable="d">
+    <ScrollViewer Background="Transparent" VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="20,16,20,28" MaxWidth="760" HorizontalAlignment="Left" Spacing="16">
+            <StackPanel Spacing="4">
+                <TextBlock Text="空间音频" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock
+                    Text="{x:Bind Vm.ConnectionHint, Mode=OneWay}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <InfoBar
+                IsClosable="False"
+                IsOpen="{x:Bind Vm.ShowOfflineHint, Mode=OneWay}"
+                Severity="Informational"
+                Title="未连接耳机"
+                Message="可先在「设备」页连接。当前仅更新界面状态，不会写入耳机。" />
+
+            <InfoBar
+                IsClosable="False"
+                IsOpen="{x:Bind Vm.ShowSpatialWriteWarning, Mode=OneWay}"
+                Severity="Warning"
+                Title="空间音频写入提示"
+                Message="{x:Bind Vm.SpatialWriteStatus, Mode=OneWay}" />
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <StackPanel Spacing="14">
+                    <Border Padding="0" Background="Transparent">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock Text="沉浸声" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="在支持的音视频中感受 3D 沉浸感及空间感 · 主写 Config 0x1D 位图"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ToggleSwitch
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                IsOn="{x:Bind Vm.SpatialAudioEnabled, Mode=TwoWay}" />
+                        </Grid>
+                    </Border>
+
+                    <Border
+                        Padding="14,12"
+                        CornerRadius="6"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock Text="音频模式" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="{x:Bind Vm.AudioModeCaption, Mode=OneWay}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                            <!-- SelectedIndex avoids ComboBox SelectedItem/reference mismatch -->
+                            <ComboBox
+                                x:Name="AudioModeCombo"
+                                Grid.Column="1"
+                                MinWidth="200"
+                                VerticalAlignment="Center"
+                                ItemsSource="{x:Bind Vm.AudioModes}"
+                                SelectedIndex="{x:Bind Vm.SelectedAudioModeIndex, Mode=TwoWay}"
+                                IsEnabled="{x:Bind Vm.IsAudioModeEnabled, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
+
+                    <Border
+                        Padding="14,12"
+                        CornerRadius="6"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock Text="头部追踪" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="转头时保持声音固定方向 · 仅小米空间音频 · Config 0x1D bit3"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ToggleSwitch
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                IsEnabled="{x:Bind Vm.IsXiaomiSpatialAudio, Mode=OneWay}"
+                                IsOn="{x:Bind Vm.HeadTracking, Mode=TwoWay}" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="场景渲染" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock
+                            Text="{x:Bind Vm.SceneCaption, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <controls:SegmentedControl
+                        MinHeight="40"
+                        IsItemsEnabled="{x:Bind Vm.IsXiaomiSpatialAudio, Mode=OneWay}"
+                        ItemsSource="{x:Bind Vm.SceneModes}"
+                        SelectedOption="{x:Bind Vm.SelectedSceneMode, Mode=TwoWay}" />
+                    <TextBlock
+                        Text="{x:Bind Vm.SceneStatus, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,5 @@
+<Solution>
+  <!-- VS2026 slnx: ONLY the WinExe so F5 cannot pick the class library.
+       Core is loaded via ProjectReference inside the csproj. -->
+  <Project Path="src/MiBudsController/MiBudsController.csproj" />
+</Solution>

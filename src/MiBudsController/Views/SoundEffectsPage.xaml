@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="MiBudsController.Views.SoundEffectsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="Transparent"
+    mc:Ignorable="d">
+    <ScrollViewer Background="Transparent" VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="20,16,20,28" MaxWidth="760" HorizontalAlignment="Left" Spacing="16">
+            <StackPanel Spacing="4">
+                <TextBlock Text="音效设置" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock
+                    Text="可写项仅低延迟；其余为协议未覆盖占位"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="低延迟" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock
+                            Text="在游戏音视频同步上提供低延迟体验"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <ToggleSwitch
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsOn="{x:Bind Vm.LowLatency, Mode=TwoWay}" />
+                </Grid>
+            </Border>
+
+            <TextBlock Text="以下项目当前不可用" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}" Opacity="0.72">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="与本机音量同步" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorDisabledBrush}" />
+                    <TextBlock Text="协议未覆盖 · 禁用占位" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorDisabledBrush}" />
+                    <TextBlock Margin="0,8,0,0" Text="自适应听感" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorDisabledBrush}" />
+                    <TextBlock Text="协议未覆盖 · 禁用占位" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorDisabledBrush}" />
+                    <TextBlock Margin="0,8,0,0" Text="音频音质（LHDC 等）" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorDisabledBrush}" />
+                    <TextBlock Text="当前编解码：未知" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorDisabledBrush}" />
+                    <TextBlock Margin="0,8,0,0" Text="音效模式 / 定制音效" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorDisabledBrush}" />
+                    <TextBlock Text="建议在手机 App 中配置" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorDisabledBrush}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
