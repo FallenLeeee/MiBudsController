@@ -159,6 +159,9 @@ public sealed partial class MiniControlWindow : Window
         BringToForeground();
         Bindings.Update();
 
+        // 打开迷你面板时校验耳机是否仍连接，失效则恢复未连接状态。
+        _ = Main.VerifyConnectionAsync();
+
         PlayOpenAnimation();
         _idleHideTimer.Start();
     }

@@ -16,6 +16,10 @@ namespace MiBudsController.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private const string LastDeviceKey = "LastDeviceId";
+
+    /// <summary>连接广播后延迟扫描的间隔，避免系统尚未建连完成就扫到空列表。</summary>
+    private const int BroadcastRescanDelayMs = 5000;
+
     private readonly EarbudsClient _client;
     private readonly BluetoothService _bluetooth = new();
     private readonly AppSettings _settings;
@@ -25,7 +29,9 @@ public partial class MainViewModel : ObservableObject
     private DeviceWatcher? _watcher;
     private bool _watcherStarted;
     private bool _initialized;
+    private bool _verifying;
     private string? _attachedDeviceId;
+    private CancellationTokenSource? _broadcastRescanCts;
 
     /// <summary>
     /// 构造时绑定客户端与蓝牙服务事件，并把所有回调切回 UI 线程；
@@ -214,7 +220,91 @@ public partial class MainViewModel : ObservableObject
         IsConnected = false;
         StatusText = "未连接";
         ScanHint = "已断开应用通道。耳机仍可保持系统蓝牙连接；点「重新扫描」可再次接入。";
+        ClearBatteryReadings();
         IsBusy = false;
+    }
+
+    /// <summary>
+    /// 打开主界面/迷你面板时校验耳机是否仍连接：
+    /// 应用层或系统蓝牙任一失效则恢复“未连接”并清空电量（避免卡在“充电中”）；
+    /// 仍连接时重新拉取设备信息，刷新电量与充电状态。
+    /// </summary>
+    public async Task VerifyConnectionAsync()
+    {
+        if (_verifying)
+        {
+            return;
+        }
+
+        _verifying = true;
+        try
+        {
+            if (!_client.IsConnected)
+            {
+                if (IsConnected || HasAnyBatteryReading)
+                {
+                    ApplyDisconnectedState("耳机连接已失效，已恢复为未连接");
+                }
+
+                return;
+            }
+
+            string? deviceId = _attachedDeviceId ?? SelectedDevice?.Id ?? _lastDeviceId;
+            if (deviceId is not null)
+            {
+                bool systemConnected = await _bluetooth.IsDeviceConnectedAsync(deviceId);
+                if (!systemConnected)
+                {
+                    await _client.DisconnectAsync();
+                    ApplyDisconnectedState("耳机已不在系统蓝牙连接中，已恢复为未连接");
+                    return;
+                }
+            }
+
+            if (!IsConnected)
+            {
+                IsConnected = true;
+                StatusText = "已连接";
+            }
+
+            // 主动回读，避免界面上残留旧的充电/电量读数。
+            _client.GetDeviceInfo();
+            _client.GetRunInfo();
+        }
+        catch (Exception ex)
+        {
+            _logs.AddSystem($"[校验] 打开界面时检查连接失败：{ex.Message}");
+        }
+        finally
+        {
+            _verifying = false;
+        }
+    }
+
+    /// <summary>三块电量卡片是否仍持有读数。</summary>
+    private bool HasAnyBatteryReading =>
+        LeftBattery.HasReading || RightBattery.HasReading || CaseBattery.HasReading;
+
+    /// <summary>清空电量读数，卡片回到“未连接 / --”。</summary>
+    private void ClearBatteryReadings()
+    {
+        LeftBattery.Reading = null;
+        RightBattery.Reading = null;
+        CaseBattery.Reading = null;
+    }
+
+    /// <summary>统一把界面恢复为未连接，并清除过期电量/设备信息。</summary>
+    private void ApplyDisconnectedState(string hint)
+    {
+        _attachedDeviceId = null;
+        IsConnected = false;
+        StatusText = "未连接";
+        ScanHint = hint;
+        FirmwareText = "固件：--";
+        VidPidText = "VID/PID：--";
+        ClearBatteryReadings();
+        ShowInfo(hint, InfoBarSeverity.Warning);
+        _logs.AddSystem($"[校验] {hint}");
     }
 
     /// <summary>用户切换选中设备时，自动尝试接入新设备。</summary>
@@ -330,8 +420,9 @@ public partial class MainViewModel : ObservableObject
         _logs.AddSystem("[扫描] 系统已连接设备枚举完成");
 
     /// <summary>
-    /// 统一处理连接广播：耳机关联设备出现时自动重扫接入，
+    /// 统一处理连接广播：耳机关联设备出现时延迟重扫接入，
     /// 移除时若正是当前设备则断开并重扫。
+    /// 出现/更新不立刻扫——系统还在建连时扫到的列表可能不完整，等 5 秒再接入。
     /// </summary>
     private void HandleWatcherDevice(string kind, string id, string? name)
     {
@@ -357,10 +448,54 @@ public partial class MainViewModel : ObservableObject
                 return;
             }
 
-            if (!IsBusy && (!IsConnected || SelectedDevice?.Id != id || _attachedDeviceId != id))
+            if (!IsConnected || SelectedDevice?.Id != id || _attachedDeviceId != id)
             {
-                _ = RescanSafeAsync($"检测到耳机连接广播：{label}");
+                ScheduleBroadcastRescan($"检测到耳机连接广播：{label}");
             }
+        });
+    }
+
+    /// <summary>
+    /// 广播触发的延迟扫描：从广播出现起等 5 秒再扫，给系统蓝牙建连留时间；
+    /// 期间若有新的广播则重置计时，避免连接中途扫空。
+    /// </summary>
+    private void ScheduleBroadcastRescan(string reason)
+    {
+        _broadcastRescanCts?.Cancel();
+        _broadcastRescanCts?.Dispose();
+        var cts = new CancellationTokenSource();
+        _broadcastRescanCts = cts;
+
+        int delaySeconds = BroadcastRescanDelayMs / 1000;
+        _logs.AddSystem($"[扫描] {reason}；{delaySeconds} 秒后开始扫描，等待系统连接完成");
+        ScanHint = $"{reason}；{delaySeconds} 秒后自动扫描…";
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(BroadcastRescanDelayMs, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            _dispatcher.TryEnqueue(() =>
+            {
+                if (cts.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                if (IsBusy)
+                {
+                    _logs.AddSystem($"[扫描] {reason}；当前正忙，跳过本次延迟扫描");
+                    return;
+                }
+
+                _ = RescanSafeAsync(reason);
+            });
         });
     }
 
@@ -410,6 +545,7 @@ public partial class MainViewModel : ObservableObject
         _attachedDeviceId = null;
         IsConnected = false;
         StatusText = "未连接";
+        ClearBatteryReadings();
         ShowInfo(reason, InfoBarSeverity.Warning);
         if (AutoReconnect && _lastDeviceId is not null)
         {

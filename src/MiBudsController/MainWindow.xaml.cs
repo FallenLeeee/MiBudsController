@@ -112,11 +112,12 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>显示窗口并激活到前台。</summary>
+    /// <summary>显示窗口并激活到前台；打开时校验耳机是否仍连接。</summary>
     public void ShowAndActivate()
     {
         AppWindow.Show();
         Activate();
+        _ = Main.VerifyConnectionAsync();
     }
 
     /// <summary>按页面标签切换导航选中项并导航到对应页面。</summary>
